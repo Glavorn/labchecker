@@ -1,25 +1,6 @@
-# Python
+.env
+k8s/overlays/*/secret.env
 __pycache__/
 *.pyc
-*.pyo
-.venv/
-venv/
-*.egg-info/
-
-# Docker
-*.log
-
-# IDE
 .idea/
-.vscode/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Env / secrets
-.env
-.env.*
-
-# Claude Code
-.claude/
+k8s/overlays/*/teacher.env

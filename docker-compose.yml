@@ -3,13 +3,13 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: labchecker
-      POSTGRES_PASSWORD: labchecker
-      POSTGRES_DB: labchecker
+      POSTGRES_USER: ${POSTGRES_USER:-labchecker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?задайте POSTGRES_PASSWORD в .env}
+      POSTGRES_DB: ${POSTGRES_DB:-labchecker}
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U labchecker -d labchecker"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -22,7 +22,8 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql+psycopg2://labchecker:labchecker@db:5432/labchecker
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-labchecker}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-labchecker}
+      TEACHER_TOKEN: ${TEACHER_TOKEN:?задайте TEACHER_TOKEN в .env}
     depends_on:
       db:
         condition: service_healthy
@@ -37,7 +38,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "8083:80"
+      - "127.0.0.1:8080:8080"
     networks:
       - internal
 

@@ -2,81 +2,121 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="referrer" content="no-referrer" />
   <title>LabChecker</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 11' stroke='white' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css?v=1.1.1" />
 </head>
 <body>
-  <header>
-    <h1>LabChecker</h1>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">✓</span>
+        <span>LabChecker</span>
+      </a>
+      <div class="user" id="user-box" hidden>
+        <span class="user-role" id="user-role"></span>
+        <span class="user-name" id="user-name"></span>
+        <button type="button" class="btn btn-ghost btn-sm" id="logout-button">Выйти</button>
+      </div>
+    </div>
   </header>
 
-  <main>
-    <section>
-      <h2>Добавить студента</h2>
-      <form id="student-form">
-        <label>ФИО
-          <input type="text" id="student-name" required />
-        </label>
-        <label>Telegram (необязательно)
-          <input type="text" id="student-telegram" placeholder="@username" />
-        </label>
-        <button type="submit">Добавить студента</button>
-      </form>
+  <main class="container">
+    <div id="loading" class="loading" aria-live="polite">Загрузка…</div>
+    <section id="guest-view" class="view" hidden>
+      <div class="hero card">
+        <h1>Откройте свою личную ссылку</h1>
+        <p class="muted">
+          Преподаватель выдаёт каждому студенту персональную ссылку на LabChecker.
+          Достаточно открыть её один раз, дальше браузер вас запомнит.
+        </p>
+        <p id="guest-error" class="alert alert-error" hidden></p>
+        <button type="button" class="btn btn-ghost" id="open-teacher-login">Я преподаватель</button>
+      </div>
     </section>
-
-    <section>
-      <h2>Добавить лабу</h2>
-      <form id="lab-form">
-        <label>Название
-          <input type="text" id="lab-title" required />
-        </label>
-        <label>Язык
-          <select id="lab-language" required>
-            <option value="python">Python</option>
-            <option value="bash">Bash</option>
-          </select>
-        </label>
-        <label>Описание (необязательно)
-          <textarea id="lab-description" rows="3"></textarea>
-        </label>
-        <button type="submit">Добавить лабу</button>
-      </form>
+    <section id="student-view" class="view" hidden>
+      <div class="page-head">
+        <h1 id="student-greeting">Мои лабы</h1>
+        <p class="muted" id="student-summary"></p>
+      </div>
+      <div id="lab-grid" class="lab-grid"></div>
+      <div id="lab-detail"></div>
     </section>
+    <section id="teacher-view" class="view" hidden>
+      <nav class="tabs" role="tablist" aria-label="Разделы">
+        <button type="button" role="tab" class="tab" data-tab="queue">Очередь <span class="count" id="queue-count"></span></button>
+        <button type="button" role="tab" class="tab" data-tab="students">Студенты</button>
+        <button type="button" role="tab" class="tab" data-tab="labs">Лабы</button>
+      </nav>
 
-    <section>
-      <h2>Загрузить сдачу</h2>
-      <form id="upload-form">
-        <label>Студент
-          <select id="student-select" required></select>
-        </label>
-        <label>Лаба
-          <select id="lab-select" required></select>
-        </label>
-        <label>Файл или ZIP-архив проекта
-          <input type="file" id="file-input" accept=".py,.sh,.zip" required />
-        </label>
-        <button type="submit">Отправить на проверку</button>
-      </form>
-    </section>
+      <div class="tab-panel" data-panel="queue" hidden>
+        <div class="toolbar">
+          <label class="inline-field">Показать
+            <select id="queue-filter">
+              <option value="checked">На проверке</option>
+              <option value="needs_revision">На доработке</option>
+              <option value="accepted">Принятые</option>
+              <option value="">Все сдачи</option>
+            </select>
+          </label>
+        </div>
+        <div id="queue-list" class="stack"></div>
+      </div>
 
-    <section>
-      <h2>Сдачи</h2>
-      <table id="submissions-table">
-        <thead>
-          <tr>
-            <th>Студент</th>
-            <th>Лаба</th>
-            <th>Файл</th>
-            <th>Статус</th>
-            <th>Вывод проверки</th>
-            <th>Дата</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="tab-panel" data-panel="students" hidden>
+        <form id="student-form" class="card form-row">
+          <label>ФИО <input id="student-name" required maxlength="255" autocomplete="off" /></label>
+          <label>Telegram <input id="student-tg" maxlength="100" placeholder="необязательно" autocomplete="off" /></label>
+          <button type="submit" class="btn btn-primary">Добавить студента</button>
+        </form>
+        <div id="invite-box" class="card invite" hidden></div>
+        <div class="card table-card">
+          <table class="table" id="students-table">
+            <thead>
+              <tr><th>Студент</th><th>Telegram</th><th class="num">Сдач</th><th class="num">Принято</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="labs" hidden>
+        <form id="lab-form" class="card form-grid">
+          <label>Название <input id="lab-title" required maxlength="255" autocomplete="off" /></label>
+          <label>Язык
+            <select id="lab-language">
+              <option value="python">Python</option>
+              <option value="bash">Bash</option>
+            </select>
+          </label>
+          <label class="span-2">Описание задания
+            <textarea id="lab-description" rows="3" placeholder="Текст задания"></textarea>
+          </label>
+          <div class="span-2"><button type="submit" class="btn btn-primary">Добавить лабу</button></div>
+        </form>
+        <div id="labs-list" class="stack"></div>
+      </div>
     </section>
   </main>
 
-  <script type="module" src="js/main.js"></script>
+  <dialog id="teacher-dialog" class="dialog">
+    <form id="login-form" method="dialog">
+      <h2>Вход преподавателя</h2>
+      <label>Токен преподавателя
+        <input type="password" id="token-input" autocomplete="current-password" required />
+      </label>
+      <p id="login-error" class="alert alert-error" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-ghost" id="login-cancel">Отмена</button>
+        <button type="submit" class="btn btn-primary">Войти</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="app.js?v=1.1.1"></script>
 </body>
 </html>
