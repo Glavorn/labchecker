@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+images:
+  - name: labchecker-backend
+    newName: docker.io/library/labchecker-backend
+    newTag: local
+  - name: labchecker-frontend
+    newName: docker.io/library/labchecker-frontend
+    newTag: local
+
+secretGenerator:
+  - name: db-credentials
+    namespace: labchecker
+    envs:
+      - secret.env
+  - name: teacher-token
+    namespace: labchecker
+    envs:
+      - teacher.env

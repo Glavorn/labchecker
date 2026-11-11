@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: labchecker
+
+resources:
+  - ../../base
+  - redirect-https.yaml
+
+images:
+  - name: labchecker-backend
+    newName: glavorn/labchecker-backend
+    newTag: "1.1.1"
+  - name: labchecker-frontend
+    newName: glavorn/labchecker-frontend
+    newTag: "1.1.1"
+
+secretGenerator:
+  - name: db-credentials
+    namespace: labchecker
+    envs:
+      - secret.env
+  - name: teacher-token
+    namespace: labchecker
+    envs:
+      - teacher.env
+
+patches:
+  - target:
+      kind: Ingress
+      name: labchecker
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+          traefik.ingress.kubernetes.io/router.middlewares: labchecker-redirect-https@kubernetescrd
+      - op: add
+        path: /spec/rules/0/host
+        value: labchecker.135.106.139.37.sslip.io
+      - op: add
+        path: /spec/tls
+        value:
+          - hosts: [labchecker.135.106.139.37.sslip.io]
+            secretName: labchecker-tls
